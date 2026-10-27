@@ -6,10 +6,30 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: "380px",
+      },
       colors: {
-        cream: "#efeee9",
-        accent: "#7fe7c4",
-        "accent-dim": "#4a8f7a",
+        cream: "#F3F0E7",
+        offwhite: "#F3F0E7",
+        "offwhite-dim": "#D8D4C8",
+        olive: "#353D2C",
+        "olive-dark": "#262C20",
+        "olive-deep": "#1B2016",
+        "olive-surface": "#3E4734",
+        "olive-border": "#4C5740",
+        sage: "#9CAF88",
+        "sage-light": "#B4C4A3",
+        "sage-dim": "#7B8C6C",
+        concrete: "#A7A7A7",
+        "concrete-light": "#C4C4C4",
+        "concrete-dark": "#6B6E67",
+        amber: "#CC5500",
+        "amber-hover": "#E05E00",
+        "amber-light": "#E87325",
+        accent: "#CC5500",
+        "accent-dim": "#994000",
+        "accent-sage": "#9CAF88",
       },
       fontFamily: {
         hn: ['"Helvetica Neue ME"', 'Helvetica', 'Arial', 'sans-serif'],
