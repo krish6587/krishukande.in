@@ -1460,11 +1460,40 @@ footer .shell {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 2rem;
   font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: rgba(255, 255, 255, 0.45);
 }
-.lb div {
+.lb-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+.lb-right {
   display: flex;
+  align-items: center;
   gap: 1.5rem;
+}
+.lb-link {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  transition: all 0.25s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.lb-link:hover {
+  color: #fff;
+}
+.lb-link.github-link:hover {
+  color: var(--accl);
+  transform: translateY(-1px);
 }
 .fw {
   position: absolute;

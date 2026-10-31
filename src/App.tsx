@@ -1122,10 +1122,21 @@ export default function App() {
           </div>
 
           <div className="lb">
-            <span>© 2026 Krish Kumar Ukande. All rights reserved.</span>
-            <div>
-              <button className="al" onClick={() => setPrivacyOpen(true)}>Privacy Policy</button>
-              <button className="al" onClick={() => setModalOpen(true)}>Direct Contact</button>
+            <span className="lb-copy">
+              © 2026 KRISH KUMAR • CRAFTED WITH PRECISION
+            </span>
+            <div className="lb-right">
+              <button className="lb-link" onClick={() => setPrivacyOpen(true)}>
+                PRIVACY
+              </button>
+              <a
+                href="https://github.com/krish6587"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lb-link github-link"
+              >
+                GITHUB ↗
+              </a>
             </div>
           </div>
         </div>
