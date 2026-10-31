@@ -1,59 +1,115 @@
 # ⚡ Krish Kumar Ukande — Personal Portfolio
 
-A sleek, editorial-style personal portfolio website showcasing full-stack web applications, technical skillsets, and experience across the **MERN** stack and **.NET Core**.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-📄 **Resume:** [View Resume](public/resume.pdf)
+> **"Bold ideas, shipped with quiet precision."**  
+> A high-performance, editorial-grade personal portfolio engineered with React 19, TypeScript, and an interactive brutalist studio design language.
+
+🔗 **Live Portfolio:** [krishukande.in](https://krishukande.in)  
+📄 **Resume:** [View Resume (PDF)](public/resume.pdf)
 
 ---
 
-## ✨ Features
+## ✨ Highlights & Architecture
 
-- **Editorial Dark Aesthetics:** Modern high-contrast dark theme with curated emerald typography and fluid micro-animations.
-- **Interactive Project Showcase:** Highlights full-stack apps (including DinkSync Pickleball Management System) with live demo and GitHub links.
-- **Dynamic Project Manager:** In-browser modal to add, update, and manage portfolio projects dynamically.
-- **Integrated Contact & Direct Gmail Delivery:** Interactive message form integrated with FormSubmit API for instant notifications directly to Gmail.
-- **1-Click Copy & Download:** One-click clipboard copy for email and direct PDF resume download.
-- **Fully Responsive:** Custom mobile navigation drawer and adaptive grid layouts.
+- **Interactive Liquid Reveal Canvas:** Dynamic HTML5 canvas portrait reveal that reacts smoothly to cursor and pointer movements.
+- **Project Showcase Slider:** Single-card viewport slider supporting:
+  - 🖱️ **Mouse Wheel & Trackpad scroll**
+  - 👆 **Touch & Pointer Drag gesture controls**
+  - ⌨️ **Keyboard Navigation** (`Left` / `Right` Arrow keys)
+  - 🎯 **Direct Tab jump pills** and numerical counter (`01 / 05`)
+- **Brutalist Editorial Aesthetic:** Clean ink (`#0a0a0a`), terracotta accents (`#b15f2c`), and warm surfaces powered by Google's `Onest` typography.
+- **Instant Contact Drawer:** Modal inquiry form connected with asynchronous AJAX submission and instant Gmail fallback delivery.
+- **Zero-Crop Showcase:** Preserves full 16:10 aspect ratios for website screenshots with zero clipping.
+- **Optimized Performance:** 100% WebP image pipeline, preloaded LCP hero portrait, and zero third-party font bloat.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Core:** React 19, TypeScript
-- **Styling:** Tailwind CSS, Vanilla CSS animations
-- **Icons:** Lucide React
-- **Build Tool:** Vite
-- **Form Delivery:** FormSubmit API
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend Framework** | React 19, TypeScript, Vite |
+| **Styling & Design** | Custom CSS Architecture, Tailwind CSS, Onest Typography |
+| **Animations & Effects** | HTML5 2D Canvas Context, CSS Transforms, RequestAnimationFrame |
+| **Form Delivery** | FormSubmit AJAX API with automated mailto fallback |
+| **Deployment** | Vercel (SPA Rewrites enabled with `vercel.json`) |
+
+---
+
+## 💻 Featured Projects
+
+1. **TripVault** — *Travel Itinerary & Group Expense Vault*  
+   Multi-day itinerary planner with real-time group expense splitting and document vault.  
+   `React` • `TypeScript` • `Node.js` • `Express` • `MongoDB` • `TailwindCSS`  
+   [Live Demo ↗](https://tripvault-alpha-eight.vercel.app/) • [Source Code](https://github.com/krish6587/TripVault)
+
+2. **DinkSync** — *Pickleball Tournament Management*  
+   Automated tournament creation, bracket fixtures, live scoring, AI insights, and role-based access control.  
+   `React` • `Node.js` • `Express` • `MongoDB` • `REST APIs`  
+   [Live Demo ↗](https://dinksync-pickleball-management-system-siob.onrender.com/) • [Source Code](https://github.com/krish6587/pickleball-management-system)
+
+3. **AyuNex** — *Ayurveda Clinical Trials & Pharmacovigilance*  
+   Clinical trial tracking platform with subject recruitment workflows and regulatory safety dashboards.  
+   `React` • `FastAPI` • `Python` • `PostgreSQL` • `JWT / RBAC`  
+   [Live Demo ↗](https://ayunex-frontend.onrender.com/) • [Source Code](https://github.com/krish6587/AyuNex)
+
+4. **Data Analyzer** — *Interactive Dataset & Visualization Tool*  
+   CSV & Excel file parser with automated statistical summaries and interactive charts.  
+   `JavaScript` • `Chart.js` • `PapaParse` • `XLSX.js`  
+   [Live Demo ↗](https://data-analyzer-w9t1.onrender.com/) • [Source Code](https://github.com/krish6587/Data-Analyzer-)
+
+5. **ChessCraft** — *Modern Real-Time Chess Platform*  
+   Multiplayer chess platform featuring real-time WebSockets, EF Core matchmaking, and tactical puzzle engine.  
+   `.NET 8` • `ASP.NET Core` • `SignalR` • `React` • `Entity Framework Core`  
+   [Live Demo ↗](https://chesscraft-98un.onrender.com/) • [Source Code](https://github.com/krish6587/chesscraft)
 
 ---
 
 ## 🚀 Getting Started Locally
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/krish6587/My-Portfolio.git
-   cd My-Portfolio
-   ```
+### Prerequisites
+- Node.js (v18 or higher recommended)
+- npm or pnpm
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+### Installation
 
-3. **Start development server:**
-   ```bash
-   npm run dev
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/krish6587/krishukande.in.git
+cd krishukande.in
 
-4. **Build for production:**
-   ```bash
-   npm run build
-   ```
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+### Production Build
+
+```bash
+# Build TypeScript and bundle assets
+npm run build
+
+# Preview production build locally
+npm run preview
+```
 
 ---
 
-## 📬 Contact Me
+## 📬 Contact & Connect
 
 - **Email:** [krishukande9@gmail.com](mailto:krishukande9@gmail.com)
 - **LinkedIn:** [linkedin.com/in/krish-ukande](https://www.linkedin.com/in/krish-ukande/)
 - **GitHub:** [@krish6587](https://github.com/krish6587)
+
+---
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
