@@ -3,13 +3,22 @@ import type { ProjectItem } from "../types/portfolio";
 export const PROJECTS_DATA: ProjectItem[] = [
   {
     id: 5,
-    title: "TripVault — Travel Itinerary & Group Expense Vault",
+    title: "TripVault — Travel Memory & Management Platform",
     image: "/tripvault.webp",
     thumbnail: "/tripvault.webp",
-    stats: ["Smart Travel Vault", "Real-Time Split & Budget"],
+    stats: ["Full-Stack MERN Platform", "JWT & Cloudinary"],
     description:
-      "An editorial-grade travel planning application designed to organize multi-day itineraries, track and split travel group expenses, manage flights and stays, and securely archive tickets and emergency documents in a unified vault.",
-    tags: ["React.js", "TypeScript", "Node.js", "Express.js", "MongoDB", "TailwindCSS"],
+      "A full-stack travel management platform built to help users organize their journeys, manage trips, upload travel memories, and share experiences. Features secure JWT authentication, trip management with CRUD operations, photo uploads, and public traveller profiles, powered by a responsive React interface and RESTful APIs.",
+    tags: [
+      "React.js",
+      "Node.js",
+      "Express.js",
+      "MongoDB",
+      "Tailwind CSS",
+      "JWT Authentication",
+      "Cloudinary",
+      "Multer"
+    ],
     liveUrl: "https://tripvault-alpha-eight.vercel.app/",
     githubUrl: "https://github.com/krish6587/TripVault",
   },

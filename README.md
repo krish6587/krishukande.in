@@ -43,9 +43,9 @@
 
 ## 💻 Featured Projects
 
-1. **TripVault** — *Travel Itinerary & Group Expense Vault*  
-   Multi-day itinerary planner with real-time group expense splitting and document vault.  
-   `React` • `TypeScript` • `Node.js` • `Express` • `MongoDB` • `TailwindCSS`  
+1. **TripVault** — *Travel Memory & Management Platform*  
+   A full-stack travel management platform built to help users organize their journeys, manage trips, upload travel memories, and share experiences.  
+   `React.js` • `Node.js` • `Express.js` • `MongoDB` • `Tailwind CSS` • `JWT Authentication` • `Cloudinary` • `Multer`  
    [Live Demo ↗](https://tripvault-alpha-eight.vercel.app/) • [Source Code](https://github.com/krish6587/TripVault)
 
 2. **DinkSync** — *Pickleball Tournament Management*  
