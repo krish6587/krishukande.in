@@ -1,160 +1,439 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Mail, Copy, Check, Send, ArrowUpRight, Loader2 } from "lucide-react";
+import { PROJECTS_DATA } from "./data/projectsData";
 
-/* ── assets ── */
-const PORTRAIT = "/krish.png";
+const PORTRAIT = "/krish.webp";
+const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "krishukande9@gmail.com";
 
-/* ── data ── */
-const NAV_LINKS = [
-  { label: "About", href: "#about" },
-  { label: "Skills", href: "#skills" },
-  { label: "Projects", href: "#projects" },
-  { label: "Contact", href: "#contact" },
+const PARTNERS = [
+  "React.js",
+  "TypeScript",
+  "Node.js",
+  "Express.js",
+  "ASP.NET",
+  "MongoDB",
+  "PostgreSQL",
+  "TailwindCSS"
 ];
 
-const SOCIAL_LINKS = [
-  { label: "GitHub", href: "https://github.com/krish6587" },
-  { label: "LinkedIn", href: "https://www.linkedin.com/in/krish-ukande/" },
-  { label: "Resume", href: "/resume.pdf" },
+const CAROUSEL_ITEMS = [
+  { category: "MERN Stack", desc: "Full-stack scalable web applications." },
+  { category: "ASP.NET Core", desc: "High-performance C# backend APIs." },
+  { category: "Database & APIs", desc: "Clean architecture & secure endpoints." },
 ];
 
-const SKILLS = {
-  Frontend: ["React", "TypeScript", "JavaScript", "HTML5", "CSS3", "Tailwind CSS", "Next.js"],
-  Backend: ["Node.js", "Express.js", "ASP.NET Core", "C#", "REST APIs", "GraphQL"],
-  Database: ["MongoDB", "SQL Server", "PostgreSQL", "Firebase"],
-  "Tools & DevOps": ["Git", "GitHub", "Docker", "Postman", "VS Code", "Figma"],
-};
-
-/* ── project types & defaults ── */
-interface Project {
-  id: string;
-  title: string;
-  desc: string;
-  tech: string[];
-  link: string;  // GitHub
-  live: string;  // Live demo URL
-}
-
-const DEFAULT_PROJECTS: Project[] = [
+const SERVICES = [
   {
-    id: "pickleball-tournament",
-    title: "Pickleball Tournament Management System",
-    desc: "Full-stack tournament management application using React.js, Node.js, Express.js, and MongoDB. Implemented JWT authentication, Admin/Viewer roles, OTP verification, REST APIs, and a live ScoreSheet with serving rules, server rotation, and receiver calculations.",
-    tech: ["React.js", "Node.js", "Express.js", "MongoDB", "Tailwind CSS", "JWT"],
-    link: "https://github.com/krish6587",
-    live: "",
+    num: "01",
+    title: "Frontend Engineering",
+    desc: "React.js, TypeScript, TailwindCSS, modern responsive UI, state management & fluid animations."
   },
   {
-    id: "data-analyzer",
-    title: "Data Analyzer Web Application",
-    desc: "Developed a web-based Data Analyzer using HTML, CSS, and JavaScript for CSV/Excel data analysis. Implemented data parsing, statistical analysis, and interactive visualizations using Chart.js, PapaParse, and XLSX.js.",
-    tech: ["JavaScript", "HTML5", "CSS3", "Chart.js", "PapaParse", "XLSX.js"],
-    link: "https://github.com/krish6587",
-    live: "",
+    num: "02",
+    title: "Backend & RESTful APIs",
+    desc: "Node.js, Express.js, ASP.NET Core (.NET 8, C#), FastAPI (Python), robust micro-services."
   },
   {
-    id: "portfolio-website",
-    title: "Editorial Portfolio Website",
-    desc: "Personal portfolio featuring dark editorial aesthetic, dynamic marquee, custom project manager with live preview links, and interactive resume viewer.",
-    tech: ["React", "TypeScript", "Tailwind CSS", "Vite"],
-    link: "https://github.com/krish6587",
-    live: "",
+    num: "03",
+    title: "Databases & Architecture",
+    desc: "MongoDB, PostgreSQL, SQL Server, Entity Framework Core, Mongoose & schema optimization."
   },
+  {
+    num: "04",
+    title: "Real-Time & DevOps",
+    desc: "SignalR (WebSockets), JWT / RBAC authentication, Git, Docker, Render & automated deployments."
+  }
 ];
 
-function loadProjects(): Project[] {
-  try {
-    const saved = localStorage.getItem("portfolio_projects_v3");
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return DEFAULT_PROJECTS;
-}
-
-function saveProjects(projects: Project[]) {
-  localStorage.setItem("portfolio_projects_v3", JSON.stringify(projects));
-}
-
-/* ── intersection observer hook ── */
-function useReveal(threshold = 0.15) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          obs.disconnect();
-        }
-      },
-      { threshold }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
-  return { ref, visible };
-}
-
-/* ════════════════════════════════════════════════════════════════ */
 export default function App() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  /* ── UI state ── */
+  const [loaderVisible, setLoaderVisible] = useState(true);
+  const [loaderProgress, setLoaderProgress] = useState(0);
+  const [loaderOut, setLoaderOut] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
-  /* ── project management state ── */
-  const [projectList, setProjectList] = useState<Project[]>(loadProjects);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newProject, setNewProject] = useState({ title: "", desc: "", tech: "", link: "", live: "" });
+  /* ── Clock state ── */
+  const [timeStr, setTimeStr] = useState("");
+  const [dateStr, setDateStr] = useState("");
 
-  const addProject = () => {
-    if (!newProject.title.trim()) return;
-    const p: Project = {
-      id: Date.now().toString(),
-      title: newProject.title.trim(),
-      desc: newProject.desc.trim(),
-      tech: newProject.tech.split(",").map((t) => t.trim()).filter(Boolean),
-      link: newProject.link.trim() || "https://github.com/krish6587",
-      live: newProject.live.trim(),
+  /* ── Hero Carousel state ── */
+  const [activeSlot, setActiveSlot] = useState(0);
+
+  /* ── Project Slider state ── */
+  const [projectIndex, setProjectIndex] = useState(0);
+  const [projectTransition, setProjectTransition] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right">("right");
+
+  const totalProjects = PROJECTS_DATA.length;
+  const currentProject = PROJECTS_DATA[projectIndex];
+
+  /* ── Project Slider Wheel & Drag Ref ── */
+  const projectSliderRef = useRef<HTMLDivElement>(null);
+  const lastWheelTime = useRef(0);
+  const dragStartX = useRef<number | null>(null);
+  const dragStartY = useRef<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const goToProject = (idx: number, dir?: "left" | "right") => {
+    if (projectTransition || idx === projectIndex) return;
+    const direction = dir || (idx > projectIndex ? "right" : "left");
+    setSlideDirection(direction);
+    setProjectTransition(true);
+    setTimeout(() => {
+      setProjectIndex(idx);
+      setTimeout(() => {
+        setProjectTransition(false);
+      }, 50);
+    }, 180);
+  };
+
+  const nextProject = () => {
+    const next = (projectIndex + 1) % totalProjects;
+    goToProject(next, "right");
+  };
+
+  const prevProject = () => {
+    const prev = (projectIndex - 1 + totalProjects) % totalProjects;
+    goToProject(prev, "left");
+  };
+
+  /* ── Contact Form state ── */
+  const [contactForm, setContactForm] = useState({ name: "", email: "", message: "", _honey: "" });
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formSuccess, setFormSuccess] = useState(false);
+
+  /* ── Canvas Liquid Reveal ref ── */
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const heroBoxRef = useRef<HTMLDivElement>(null);
+
+  /* ── Clock tick ── */
+  useEffect(() => {
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const updateTime = () => {
+      const d = new Date();
+      const h = d.getHours();
+      const t = (h % 12 || 12) + ":" + String(d.getMinutes()).padStart(2, "0") + (h < 12 ? "am" : "pm");
+      setTimeStr(t);
+      setDateStr(d.getDate() + " " + months[d.getMonth()] + ", " + d.getFullYear());
     };
-    const updated = [p, ...projectList];
-    setProjectList(updated);
-    saveProjects(updated);
-    setNewProject({ title: "", desc: "", tech: "", link: "", live: "" });
-    setShowAddModal(false);
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  /* ── Initial Loader Ease ── */
+  useEffect(() => {
+    let start: number | null = null;
+    const duration = 1200;
+    const ease = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);
+
+    const step = (now: number) => {
+      if (!start) start = now;
+      const progress = Math.min(1, (now - start) / duration);
+      const val = Math.round(ease(progress) * 100);
+      setLoaderProgress(val);
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        setLoaderOut(true);
+        setTimeout(() => {
+          setLoaderVisible(false);
+          triggerReveals();
+        }, 750);
+      }
+    };
+
+    const reqId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(reqId);
+  }, []);
+
+  /* ── Body scroll lock ── */
+  useEffect(() => {
+    if (navOpen || modalOpen || privacyOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [navOpen, modalOpen, privacyOpen]);
+
+  /* ── Scroll reveal trigger ── */
+  const triggerReveals = () => {
+    const elements = document.querySelectorAll(".rv, .ln, .wd");
+    elements.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.95) {
+        el.classList.add("in");
+      }
+    });
   };
 
-  const removeProject = (id: string) => {
-    const updated = projectList.filter((p) => p.id !== id);
-    setProjectList(updated);
-    saveProjects(updated);
+  useEffect(() => {
+    const handleScroll = () => {
+      triggerReveals();
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  /* ── Keyboard Arrow Navigation for Projects ── */
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea") return;
+      if (e.key === "ArrowLeft") prevProject();
+      if (e.key === "ArrowRight") nextProject();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [projectIndex, projectTransition]);
+
+  /* ── Mouse Wheel & Trackpad Scroll on Project Showcase ── */
+  useEffect(() => {
+    const el = projectSliderRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const absX = Math.abs(e.deltaX);
+      const absY = Math.abs(e.deltaY);
+      const delta = absX > absY ? e.deltaX : e.deltaY;
+
+      if (Math.abs(delta) < 25) return;
+
+      const now = Date.now();
+      if (now - lastWheelTime.current < 450) {
+        // Debounce to change 1 project per scroll notch
+        e.preventDefault();
+        return;
+      }
+
+      if (delta > 0) {
+        // scrolling down / right
+        if (projectIndex < totalProjects - 1) {
+          e.preventDefault();
+          lastWheelTime.current = now;
+          nextProject();
+        }
+      } else {
+        // scrolling up / left
+        if (projectIndex > 0) {
+          e.preventDefault();
+          lastWheelTime.current = now;
+          prevProject();
+        }
+      }
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [projectIndex, projectTransition, totalProjects]);
+
+  /* ── Pointer Drag / Swipe for Projects ── */
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("a") || target.closest("button")) return;
+    dragStartX.current = e.clientX;
+    dragStartY.current = e.clientY;
+    setIsDragging(true);
   };
 
-  const updateProjectLive = (id: string, liveUrl: string) => {
-    const updated = projectList.map((p) => (p.id === id ? { ...p, live: liveUrl } : p));
-    setProjectList(updated);
-    saveProjects(updated);
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (dragStartX.current === null) return;
+    const diffX = e.clientX - dragStartX.current;
+    const diffY = dragStartY.current !== null ? Math.abs(e.clientY - dragStartY.current) : 0;
+
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > diffY) {
+      if (diffX < 0) {
+        nextProject();
+      } else {
+        prevProject();
+      }
+    }
+    dragStartX.current = null;
+    dragStartY.current = null;
+    setIsDragging(false);
   };
 
-  /* ── contact form & copy state ── */
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
-
-  const handleCopyEmail = () => {
-    navigator.clipboard.writeText("krishukande9@gmail.com");
-    setCopiedEmail(true);
-    setTimeout(() => setCopiedEmail(false), 2500);
+  const handlePointerCancel = () => {
+    dragStartX.current = null;
+    dragStartY.current = null;
+    setIsDragging(false);
   };
 
-  const handleContactSubmit = async (e: React.FormEvent) => {
+  /* ── Liquid Canvas Reveal on Portrait ── */
+  useEffect(() => {
+    const cv = canvasRef.current;
+    const box = heroBoxRef.current;
+    if (!cv || !box) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+
+    /* R0: Cursor brush radius (reduced from 140 to 65 for a sleeker, smaller effect) */
+    const R0 = 65;
+    const decay = 0.016;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const img = new Image();
+    img.src = PORTRAIT;
+
+    const cover = document.createElement("canvas");
+    const brush = document.createElement("canvas");
+    const cx = cover.getContext("2d");
+    const bx = brush.getContext("2d");
+    if (!cx || !bx) return;
+
+    let W = 0;
+    let Hh = 0;
+    let rad = R0 * dpr;
+    let pts: [number, number][] = [];
+    let last: [number, number] | null = null;
+    let idle = 121;
+    let run = false;
+    let animId: number;
+
+    const size = () => {
+      const r = box.getBoundingClientRect();
+      W = Math.round(r.width * dpr);
+      Hh = Math.round(r.height * dpr);
+      cv.width = cover.width = W;
+      cv.height = cover.height = Hh;
+      rad = R0 * dpr;
+      brush.width = brush.height = Math.ceil(rad * 2);
+
+      if (!img.complete || !img.naturalWidth) return;
+      const s = Math.min(W / img.naturalWidth, Hh / img.naturalHeight);
+      const w = img.naturalWidth * s;
+      const h = img.naturalHeight * s;
+      const px = window.innerWidth < 1024 ? 0.5 : 0.78;
+
+      cx.globalCompositeOperation = "source-over";
+      cx.clearRect(0, 0, W, Hh);
+      const og = cx.createLinearGradient(0, 0, W, Hh);
+      og.addColorStop(0, "#e0925a");
+      og.addColorStop(1, "#b15f2c");
+      cx.fillStyle = og;
+      cx.fillRect(0, 0, W, Hh);
+      cx.drawImage(img, (W - w) * px, Hh - h, w, h);
+      cx.globalCompositeOperation = "multiply";
+      cx.fillStyle = "#f0a468";
+      cx.fillRect((W - w) * px, Hh - h, w, h);
+      cx.globalCompositeOperation = "source-over";
+    };
+
+    img.onload = size;
+    size();
+
+    const ro = new ResizeObserver(size);
+    ro.observe(box);
+
+    const stamp = (x: number, y: number) => {
+      const d = brush.width;
+      const c = d / 2;
+      bx.globalCompositeOperation = "source-over";
+      bx.clearRect(0, 0, d, d);
+      const g = bx.createRadialGradient(c, c, 0, c, c, c);
+      g.addColorStop(0, "rgba(255,255,255,1)");
+      g.addColorStop(0.55, "rgba(255,255,255,0.85)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      bx.fillStyle = g;
+      bx.fillRect(0, 0, d, d);
+      bx.globalCompositeOperation = "source-in";
+      bx.drawImage(cover, x - c, y - c, d, d, 0, 0, d, d);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.drawImage(brush, x - c, y - c);
+    };
+
+    const loop = () => {
+      const drawing = pts.length > 0;
+      if (drawing) idle = 0;
+      else idle++;
+
+      if (idle > 120) {
+        run = false;
+        ctx.clearRect(0, 0, W, Hh);
+        return;
+      }
+
+      const fade = drawing ? decay : Math.min(decay + idle * 0.004, 0.5);
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillStyle = `rgba(0,0,0,${fade})`;
+      ctx.fillRect(0, 0, W, Hh);
+
+      if (drawing) {
+        pts.forEach((p) => stamp(p[0], p[1]));
+        pts = [];
+      }
+      animId = requestAnimationFrame(loop);
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const r = cv.getBoundingClientRect();
+      const x = (e.clientX - r.left) * dpr;
+      const y = (e.clientY - r.top) * dpr;
+
+      if (x < -rad || y < -rad || x > W + rad || y > Hh + rad) {
+        last = null;
+        return;
+      }
+
+      if (last) {
+        const dx = x - last[0];
+        const dy = y - last[1];
+        const dist = Math.hypot(dx, dy);
+        const step = Math.max(rad * 0.3, 1);
+        const n = Math.min(Math.ceil(dist / step), 60);
+        for (let i = 1; i <= n; i++) {
+          pts.push([last[0] + (dx * i) / n, last[1] + (dy * i) / n]);
+        }
+      } else {
+        pts.push([x, y]);
+      }
+
+      last = [x, y];
+      if (!run) {
+        run = true;
+        idle = 0;
+        animId = requestAnimationFrame(loop);
+      }
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      ro.disconnect();
+      cancelAnimationFrame(animId);
+    };
+  }, []);
+
+  /* ── Smooth Navigation Scroll ── */
+  const scrollToSection = (id: string) => {
+    setNavOpen(false);
+    const el = document.getElementById(id);
+    if (!el) return;
+    setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+  };
+
+  /* ── Contact Form Submit ── */
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!contactForm.name.trim() || !contactForm.message.trim() || isSubmitting) return;
+    if (contactForm._honey) return;
+    if (!contactForm.name.trim() || !contactForm.message.trim()) return;
 
-    setIsSubmitting(true);
-    setSubmitStatus("idle");
-
+    setFormSubmitting(true);
     try {
-      const response = await fetch("https://formsubmit.co/ajax/krishukande9@gmail.com", {
+      const endpoint = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -164,723 +443,863 @@ export default function App() {
           name: contactForm.name,
           email: contactForm.email || "Not provided",
           message: contactForm.message,
-          _subject: `New Portfolio Message from ${contactForm.name}`,
+          _subject: `New Portfolio Inquiry from ${contactForm.name}`,
           _template: "table",
           _captcha: "false",
         }),
       });
 
-      const data = await response.json();
-      if (response.ok && (data.success === "true" || data.success === true || response.status === 200)) {
-        setSubmitStatus("success");
-        setContactForm({ name: "", email: "", message: "" });
-        setTimeout(() => setSubmitStatus("idle"), 8000);
+      if (response.ok) {
+        setFormSuccess(true);
       } else {
-        throw new Error(data.message || "Failed to submit");
+        throw new Error("Submit failed");
       }
-    } catch (err) {
-      console.error("Form submit error, falling back to mailto:", err);
-      const subject = encodeURIComponent(`Portfolio Inquiry from ${contactForm.name}`);
+    } catch {
+      const subject = encodeURIComponent(`Portfolio Message from ${contactForm.name}`);
       const body = encodeURIComponent(
-        `Hi Krish,\n\n${contactForm.message}\n\n---\nFrom: ${contactForm.name}\nEmail: ${contactForm.email || "Not provided"}`
+        `Hi Krish,\n\n${contactForm.message}\n\nFrom: ${contactForm.name}\nEmail: ${contactForm.email || "Not provided"}`
       );
-      window.location.href = `mailto:krishukande9@gmail.com?subject=${subject}&body=${body}`;
-      setSubmitStatus("error");
-      setTimeout(() => setSubmitStatus("idle"), 8000);
+      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+      setFormSuccess(true);
     } finally {
-      setIsSubmitting(false);
+      setFormSubmitting(false);
     }
   };
 
-  useEffect(() => {
-    document.body.style.overflow = drawerOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [drawerOpen]);
-
-  /* reveal refs for each section */
-  const about = useReveal();
-  const skills = useReveal();
-  const projects = useReveal();
-  const contact = useReveal();
-
-  const closeDrawer = () => setDrawerOpen(false);
-
   return (
-    <div className="bg-black font-hn text-cream selection:bg-accent selection:text-[#0b0d10]">
-      {/* ═══════════════  HERO  ═══════════════ */}
-      <section className="relative min-h-[100dvh] w-full overflow-hidden bg-[#0b0d10] flex flex-col">
-        {/* Right Light Grey Polygon (Desktop) */}
-        <div 
-          className="absolute inset-0 pointer-events-none z-0 hidden lg:block bg-[#d8d8d8]"
-          style={{ clipPath: "polygon(46% 0, 100% 0, 100% 100%, 34% 100%)" }}
-        />
-        {/* Mobile / Tablet split */}
-        <div 
-          className="absolute inset-0 pointer-events-none z-0 lg:hidden bg-[#d8d8d8]"
-          style={{ clipPath: "polygon(0 52%, 100% 44%, 100% 100%, 0 100%)" }}
-        />
-
-        {/* ── Navbar ── */}
-        <header className="relative z-30 flex items-center justify-between px-6 sm:px-12 lg:px-16 pt-7 sm:pt-9 w-full select-none">
-          {/* K.U Logo */}
-          <a href="#" className="text-white font-black text-2xl tracking-tight hover:text-accent transition-colors duration-200">
-            K<span className="text-accent">.</span>U
-          </a>
-
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8 text-[15px]">
-            <a href="#about" className="nav-link text-neutral-800 font-semibold hover:text-black transition-colors">About</a>
-            <a href="#skills" className="nav-link text-neutral-800 font-semibold hover:text-black transition-colors">Skills</a>
-            <a href="#projects" className="nav-link text-neutral-800 font-semibold hover:text-black transition-colors">Portfolio</a>
-            <a href="#contact" className="rounded-xl border-2 border-neutral-800 text-neutral-900 font-bold text-sm px-6 py-2.5 transition-all duration-200 hover:bg-black hover:text-white hover:border-black">
-              Get in touch
-            </a>
-          </nav>
-
-          {/* Mobile hamburger */}
-          <button
-            type="button"
-            aria-label={drawerOpen ? "Close menu" : "Open menu"}
-            onClick={() => setDrawerOpen(!drawerOpen)}
-            className="lg:hidden z-50 flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm focus:outline-none"
-          >
-            <div className="relative flex h-4 w-6 flex-col justify-between">
-              <span className={`h-[2.5px] w-full bg-white transform transition-all duration-300 origin-center ${drawerOpen ? "translate-y-[7px] rotate-45" : ""}`} />
-              <span className={`h-[2.5px] w-full bg-white transition-opacity duration-200 ${drawerOpen ? "opacity-0" : "opacity-100"}`} />
-              <span className={`h-[2.5px] w-full bg-white transform transition-all duration-300 origin-center ${drawerOpen ? "-translate-y-[7px] -rotate-45" : ""}`} />
-            </div>
-          </button>
-        </header>
-
-        {/* ── Hero Grid ── */}
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 flex-1 w-full max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 items-center">
-          {/* Left: Text Content */}
-          <div className="lg:col-span-5 flex flex-col justify-center py-10 lg:py-0 z-20">
-            <h1 className="text-[2.8rem] sm:text-6xl xl:text-[4.5rem] font-black text-white tracking-tight leading-[1.18] pt-2 pb-1 anim-fade-up">
-              Krish Kumar<br />Ukande<span className="text-accent">.</span>
-            </h1>
-
-            <p className="text-neutral-400 text-base sm:text-lg leading-relaxed mt-5 sm:mt-6 max-w-md anim-fade-up" style={{ animationDelay: "150ms" }}>
-              B.Tech IT student building full-stack web applications across the MERN stack and .NET&nbsp;&mdash; from pixel-level UI to database architecture.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-3.5 mt-8 sm:mt-10 anim-fade-up" style={{ animationDelay: "250ms" }}>
-              <a
-                href="#projects"
-                className="btn-glow rounded-xl bg-accent text-[#06231a] font-bold text-sm px-7 py-3.5 transition-all duration-200 hover:bg-[#93edcf] hover:shadow-[0_0_24px_rgba(127,231,196,0.25)] hover:scale-[1.03] active:scale-95"
-              >
-                View my work
-              </a>
-              <a
-                href="/resume.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                download="Krish_Kumar_Ukande_Resume.pdf"
-                className="rounded-xl border-2 border-neutral-700 text-white font-bold text-sm px-7 py-3.5 transition-all duration-200 hover:border-neutral-500 hover:bg-white/5 active:scale-95"
-              >
-                Download r&eacute;sum&eacute;
-              </a>
-            </div>
-
-            {/* Stats Row */}
-            <div className="grid grid-cols-3 gap-6 mt-10 sm:mt-14 pt-8 border-t border-neutral-800/80 anim-fade-up" style={{ animationDelay: "400ms" }}>
-              <div>
-                <span className="text-3xl sm:text-4xl font-black text-accent tracking-tight">2+</span>
-                <p className="text-xs sm:text-sm text-neutral-500 mt-1 leading-snug">Full-stack projects shipped</p>
-              </div>
-              <div>
-                <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">2</span>
-                <p className="text-xs sm:text-sm text-neutral-500 mt-1 leading-snug">Stacks&nbsp;&mdash; MERN &amp; .NET</p>
-              </div>
-              <div>
-                <span className="text-3xl sm:text-4xl font-black text-accent tracking-tight">15+</span>
-                <p className="text-xs sm:text-sm text-neutral-500 mt-1 leading-snug">Technologies used</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Portrait */}
-          <div className="lg:col-span-7 relative flex items-end justify-center lg:justify-center h-[52vh] sm:h-[62vh] lg:h-[86vh] overflow-hidden lg:overflow-visible">
-            <img
-              src={PORTRAIT}
-              alt="Krish Kumar Ukande"
-              className="h-[95%] sm:h-[98%] lg:h-[100%] w-auto max-w-full object-contain object-bottom drop-shadow-[0_20px_35px_rgba(0,0,0,0.35)] select-none pointer-events-none anim-rise-in"
+    <>
+      {/* ── Global SVGs ── */}
+      <svg width="0" height="0" style={{ position: "absolute", pointerEvents: "none" }}>
+        <defs>
+          <symbol id="logo" viewBox="0 0 48 48">
+            <path
+              fill="currentColor"
+              d="M24 2c2.2 13.8 7.9 19.6 22 22-14.1 2.4-19.8 8.2-22 22-2.2-13.8-7.9-19.6-22-22 14.1-2.4 19.8-8.2 22-22Z"
             />
+          </symbol>
+          <symbol id="ar" viewBox="0 0 24 24">
+            <path
+              d="M5 12h14M13 6l6 6-6 6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </symbol>
+          <symbol id="ur" viewBox="0 0 24 24">
+            <path
+              d="M7 17 17 7M8 7h9v9"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </symbol>
+          <symbol id="star" viewBox="0 0 24 24">
+            <path
+              fill="currentColor"
+              d="M12 2.5l2.9 5.88 6.49.94-4.7 4.58 1.11 6.46L12 17.9l-5.8 3.05 1.1-6.46-4.69-4.58 6.49-.94L12 2.5z"
+            />
+          </symbol>
+          <symbol id="globe" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" strokeWidth="1.4">
+              <circle cx="12" cy="12" r="9.25" />
+              <path d="M12 2.75c2.6 2.3 4 5.8 4 9.25s-1.4 6.95-4 9.25c-2.6-2.3-4-5.8-4-9.25s1.4-6.95 4-9.25zM2.75 12h18.5" />
+            </g>
+          </symbol>
+          <symbol id="x" viewBox="0 0 24 24">
+            <path
+              d="M4 4l16 16M20 4 4 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </symbol>
+          <symbol id="dot" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            <circle cx="12" cy="12" r="3.2" fill="currentColor" />
+          </symbol>
+          <symbol id="grid" viewBox="0 0 24 24">
+            <path
+              d="M4 6h16M4 12h16M4 18h16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </symbol>
+        </defs>
+      </svg>
+
+      <a className="skip" href="#home">
+        Skip to content
+      </a>
+
+      {/* ── Fullscreen Initial Loader ── */}
+      {loaderVisible && (
+        <div id="loader" className={loaderOut ? "out" : ""}>
+          <div className="c">
+            <div className="lg">
+              <svg style={{ fontSize: "1.875rem", color: "var(--accl)" }}>
+                <use href="#logo" />
+              </svg>
+              Krish Ukande
+            </div>
+            <p style={{ maxWidth: "24ch", fontSize: "0.875rem", color: "rgba(255,255,255,0.55)" }}>
+              Bold ideas, shipped with quiet precision.
+            </p>
+          </div>
+          <div className="pg">
+            <div className="tr">
+              <i style={{ width: `${loaderProgress}%` }} />
+            </div>
+            <div className="pr">
+              <span>Loading Experience</span>
+              <b>{String(loaderProgress).padStart(3, "0")}</b>
+            </div>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* Section Divider */}
-      <div className="section-divider" />
+      {/* ── Top Header ── */}
+      <header>
+        <div className="shell rv in" style={{ transform: "none", opacity: 1 }}>
+          <button className="brand" onClick={() => scrollToSection("home")}>
+            <svg>
+              <use href="#logo" />
+            </svg>
+            Krish Ukande
+          </button>
+          <nav>
+            <ul>
+              <li>
+                <button onClick={() => scrollToSection("home")}>Home</button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection("about")}>About</button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection("projects")}>Work</button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection("skills")}>
+                  Skills <small>▾</small>
+                </button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection("education")}>Education</button>
+              </li>
+              <li>
+                <button onClick={() => setModalOpen(true)}>Contact</button>
+              </li>
+            </ul>
+          </nav>
+          <div className="rt">
+            <div className="chip">
+              <em>Local time</em>
+              <b>{timeStr || "9:41am"}</b>
+              <span>•</span>
+              <strong>{dateStr || "31 October, 2026"}</strong>
+            </div>
+            <button className="menu" onClick={() => setNavOpen(true)}>
+              <svg style={{ fontSize: "0.875rem" }}>
+                <use href="#grid" />
+              </svg>
+              <span className="t">Menu</span>
+            </button>
+          </div>
+        </div>
+      </header>
 
-      {/* ═══════════════  01 — ABOUT  ═══════════════ */}
-      <section
-        id="about"
-        ref={about.ref}
-        className="relative bg-[#0b0d10] px-6 sm:px-12 lg:px-16 py-24 sm:py-32"
-      >
-        <div className={`max-w-5xl mx-auto w-full transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${about.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"}`}>
-          <div className="font-mono text-xs text-accent tracking-wider mb-8">
-            <span className="text-neutral-500">// </span>01 &mdash; About
+      {/* ── Main Content ── */}
+      <main id="main">
+        {/* ── Hero Section ── */}
+        <section id="home">
+          <div className="lq" ref={heroBoxRef}>
+            <img id="base" src={PORTRAIT} alt="Krish Ukande" />
+            <canvas ref={canvasRef} aria-hidden="true" />
+          </div>
+          <div className="vg" />
+          <div className="wm rv in" aria-hidden="true">
+            KRISH
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-            {/* Left Bio */}
-            <div className="lg:col-span-7 flex flex-col gap-5 text-neutral-400 text-[15px] sm:text-base leading-relaxed">
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2 font-sans">
-                I build things for the <span className="text-accent">web</span>.
-              </h2>
-              <p>
-                I'm a <strong className="text-white font-semibold">B.Tech Information Technology</strong> student who builds web applications that are both functional and considered &mdash; clean interfaces backed by solid architecture underneath.
-              </p>
-              <p>
-                My work spans the <strong className="text-white font-semibold">MERN stack</strong> (MongoDB, Express, React, Node.js) and the <strong className="text-white font-semibold">.NET ecosystem</strong> (ASP.NET Core, C#, Entity Framework). I care equally about how an app looks and how it holds up under real use.
-              </p>
-              <p>
-                Outside of coursework, I contribute to open-source and sharpen problem-solving on LeetCode.
-              </p>
-
-              <div className="flex gap-4 mt-3">
-                <a
-                  href="#contact"
-                  className="btn-glow inline-flex items-center gap-2 rounded-lg bg-accent text-[#06231a] px-6 py-2.5 text-sm font-semibold transition-all duration-200 hover:bg-[#93edcf] hover:scale-[1.03]"
-                >
-                  Get in touch
-                </a>
-                <a
-                  href="/resume.png"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg border border-[#22262c] text-white px-6 py-2.5 text-sm font-semibold transition-all duration-200 hover:bg-[#14171c] hover:border-neutral-600"
-                >
-                  Download r&eacute;sum&eacute;
-                </a>
+          <div className="shell hg">
+            <div className="lc">
+              <div className="eb rv in">Aspiring Full-Stack Developer • MERN &amp; ASP.NET Core</div>
+              <h1 className="rv in">
+                <span className="ln">
+                  <span>Bold ideas,</span>
+                </span>
+                <span className="ln">
+                  <span style={{ transitionDelay: "120ms" }}>shipped with</span>
+                </span>
+                <span className="ln">
+                  <span style={{ transitionDelay: "240ms" }}>quiet precision.</span>
+                </span>
+              </h1>
+              <div className="cta rv in" style={{ transitionDelay: "360ms" }}>
+                <button className="pill dark ar" onClick={() => setModalOpen(true)}>
+                  <span>
+                    Let's Talk
+                    <i>
+                      <svg><use href="#ar" /></svg>
+                    </i>
+                  </span>
+                </button>
+                <button className="pill outline" onClick={() => scrollToSection("projects")}>
+                  <span>View Work</span>
+                </button>
               </div>
             </div>
 
-            {/* Right Focus List */}
-            <div className="lg:col-span-5 flex flex-col justify-center border-t border-[#22262c]">
-              <div className="py-4 border-b border-[#22262c] flex justify-between items-center text-sm">
-                <span className="font-semibold text-white">Frontend</span>
-                <span className="text-neutral-400 text-xs sm:text-sm text-right font-mono">React, Next.js, TS</span>
+            <div className="rc">
+              {/* Interactive hero card carousel */}
+              <div className="hc rv in">
+                <div
+                  className="row"
+                  onClick={() => setActiveSlot((prev) => (prev + 1) % CAROUSEL_ITEMS.length)}
+                >
+                  <div className="tile">
+                    <svg><use href="#logo" /></svg>
+                  </div>
+                  <div className="pn">
+                    <div className="slot">
+                      {CAROUSEL_ITEMS.map((item, idx) => (
+                        <div key={item.category} className={idx === activeSlot ? "on" : "off"}>
+                          <small>{item.category}</small>
+                          <p>{item.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bt">
+                      <div className="dots">
+                        {CAROUSEL_ITEMS.map((_, idx) => (
+                          <i key={idx} className={idx === activeSlot ? "on" : ""} />
+                        ))}
+                      </div>
+                      <div className="arr">
+                        <button
+                          aria-label="Previous"
+                          style={{ transform: "rotate(180deg)" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveSlot((prev) => (prev - 1 + CAROUSEL_ITEMS.length) % CAROUSEL_ITEMS.length);
+                          }}
+                        >
+                          <svg><use href="#ar" /></svg>
+                        </button>
+                        <button
+                          aria-label="Next"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveSlot((prev) => (prev + 1) % CAROUSEL_ITEMS.length);
+                          }}
+                        >
+                          <svg><use href="#ar" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="py-4 border-b border-[#22262c] flex justify-between items-center text-sm">
-                <span className="font-semibold text-white">Backend</span>
-                <span className="text-neutral-400 text-xs sm:text-sm text-right font-mono">Node.js, Express, .NET</span>
-              </div>
-              <div className="py-4 border-b border-[#22262c] flex justify-between items-center text-sm">
-                <span className="font-semibold text-white">Data</span>
-                <span className="text-neutral-400 text-xs sm:text-sm text-right font-mono">MongoDB, PostgreSQL, SQL</span>
-              </div>
-              <div className="py-4 border-b border-[#22262c] flex justify-between items-center text-sm">
-                <span className="font-semibold text-white">Currently</span>
-                <span className="text-accent text-xs sm:text-sm text-right font-mono">Open to internships</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Section Divider */}
-      <div className="section-divider" />
-
-      {/* ═══════════════  02 — STACK  ═══════════════ */}
-      <section
-        id="skills"
-        ref={skills.ref}
-        className="relative bg-[#0b0d10] px-6 sm:px-12 lg:px-16 py-24 sm:py-32"
-      >
-        <div className={`max-w-5xl mx-auto w-full transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${skills.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"}`}>
-          <div className="flex items-baseline justify-between mb-10 flex-wrap gap-2">
-            <span className="font-mono text-xs text-accent tracking-wider">
-              <span className="text-neutral-500">// </span>02 &mdash; Stack
-            </span>
-            <h2 className="text-2xl font-bold tracking-tight text-white">
-              Skills &amp; technologies
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[1px] bg-[#22262c] border border-[#22262c] rounded-xl overflow-hidden">
-            {Object.entries(SKILLS).map(([category, items], ci) => (
-              <div
-                key={category}
-                className="bg-[#0b0d10] p-6 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                style={{
-                  transitionDelay: skills.visible ? `${ci * 100}ms` : "0ms",
-                  opacity: skills.visible ? 1 : 0,
-                  transform: skills.visible ? "translateY(0)" : "translateY(16px)",
-                }}
-              >
-                <h3 className="font-mono text-xs text-neutral-500 uppercase tracking-wider font-semibold mb-4">
-                  {category}
-                </h3>
-                <ul className="flex flex-col gap-2.5">
-                  {items.map((skill) => (
-                    <li key={skill} className="text-sm text-neutral-300 flex items-center gap-2.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent/80 shrink-0" />
-                      {skill}
+              {/* Tech Stack Partner list */}
+              <div className="ptn rv in">
+                <p>Primary Tech Stack</p>
+                <ul>
+                  {PARTNERS.map((tech) => (
+                    <li key={tech}>
+                      <svg><use href="#dot" /></svg>
+                      {tech}
                     </li>
                   ))}
                 </ul>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Section Divider */}
-      <div className="section-divider" />
-
-      {/* ═══════════════  03 — SELECTED WORK  ═══════════════ */}
-      <section
-        id="projects"
-        ref={projects.ref}
-        className="relative bg-[#0b0d10] px-6 sm:px-12 lg:px-16 py-24 sm:py-32"
-      >
-        <div className={`max-w-5xl mx-auto w-full transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${projects.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"}`}>
-          <div className="flex items-baseline justify-between mb-10 flex-wrap gap-4">
-            <div>
-              <span className="font-mono text-xs text-accent tracking-wider block mb-2">
-                <span className="text-neutral-500">// </span>03 &mdash; Selected work
-              </span>
-              <h2 className="text-2xl font-bold tracking-tight text-white">
-                Featured projects
-              </h2>
             </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="rounded-lg border border-[#22262c] px-4 py-2 text-xs font-semibold text-neutral-300 transition-all duration-200 hover:border-accent hover:text-accent flex items-center gap-1.5"
+          </div>
+
+          <div className="sb rv in">
+            <div className="shell">
+              <span>B.Tech IT (2023–2027)</span>
+              <span className="mid">Indore, Madhya Pradesh, India</span>
+              <span style={{ display: "inline-flex", gap: "0.5rem" }}>
+                Scroll to explore <span>↓</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── About Section ── */}
+        <section className="sec" id="about">
+          <div className="shell about">
+            <div className="gl">
+              <svg><use href="#globe" /></svg>
+              <div className="eb" style={{ position: "relative" }}>
+                The Developer
+              </div>
+              <div className="ft rv in">
+                <svg><use href="#globe" /></svg>
+                <span>Passionate about building robust web applications and solving real-world problems.</span>
+              </div>
+            </div>
+
+            <div className="stm">
+              <h2 className="s rv in">
+                I build full-stack web applications with the MERN stack and ASP.NET Core{" "}
+                <span className="g">
+                  — focusing on responsive interfaces, reliable APIs, clean database design, and secure authentication.
+                </span>
+              </h2>
+
+              <div className="fr rv in">
+                <div>
+                  <p>Find me online</p>
+                  <div className="so">
+                    <a href="https://github.com/krish6587" target="_blank" rel="noopener noreferrer" title="GitHub">
+                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                      </svg>
+                    </a>
+                    <a href="https://www.linkedin.com/in/krish-ukande/" target="_blank" rel="noopener noreferrer" title="LinkedIn">
+                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                      </svg>
+                    </a>
+                    <a href={`mailto:${CONTACT_EMAIL}`} title="Email">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="m22 7-10 7L2 7" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+
+                <a className="pill outline ar" href="/resume.pdf" target="_blank" rel="noopener noreferrer">
+                  <span>
+                    Resume
+                    <i>
+                      <svg><use href="#ur" /></svg>
+                    </i>
+                  </span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Visual Brand Pills Strip ── */}
+        <section className="sec">
+          <ul className="shell cb">
+            <li className="rv in">
+              <div style={{ background: "var(--surf)" }}>Code</div>
+            </li>
+            <li className="rv in" style={{ transitionDelay: "120ms" }}>
+              <div style={{ background: "linear-gradient(to bottom right,#cf8047,#97501f)", color: "#fff" }}>
+                Build
+              </div>
+            </li>
+            <li className="rv in" style={{ transitionDelay: "240ms" }}>
+              <div style={{ background: "var(--ink)", color: "#fff" }}>
+                <svg><use href="#ar" /></svg>
+              </div>
+            </li>
+            <li className="rv in" style={{ transitionDelay: "360ms" }}>
+              <div style={{ background: "rgba(241,240,238,.6)", color: "rgba(17,17,17,.35)" }}>
+                Ship
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        {/* ── Selected Work / Portfolio ── */}
+        <section className="sec" id="projects">
+          <div className="shell pf">
+            <div className="eb bd rv in">Portfolio</div>
+            <h2 className="h">
+              <span className="ln">
+                <span>Selected Work</span>
+              </span>
+            </h2>
+
+            {/* Showcase Header Controls */}
+            <div className="proj-showcase-header rv in">
+              <div className="proj-tabs">
+                {PROJECTS_DATA.map((p, idx) => (
+                  <button
+                    key={p.id}
+                    className={`proj-tab ${idx === projectIndex ? "active" : ""}`}
+                    onClick={() => goToProject(idx)}
+                  >
+                    <small>0{idx + 1}</small>
+                    <span>{p.title.split("—")[0].trim()}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="proj-controls">
+                <span className="proj-scroll-hint">Scroll / Drag ↔</span>
+                <div className="proj-counter">
+                  <b>0{projectIndex + 1}</b> <span>/ 0{totalProjects}</span>
+                </div>
+                <div className="proj-arrows">
+                  <button
+                    className="proj-nav-btn"
+                    onClick={prevProject}
+                    aria-label="Previous Project"
+                    style={{ transform: "rotate(180deg)" }}
+                  >
+                    <svg><use href="#ar" /></svg>
+                  </button>
+                  <button
+                    className="proj-nav-btn"
+                    onClick={nextProject}
+                    aria-label="Next Project"
+                  >
+                    <svg><use href="#ar" /></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Featured Showcase Card */}
+            <div
+              ref={projectSliderRef}
+              className={`cd-featured rv in ${isDragging ? "dragging" : ""}`}
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerCancel}
             >
-              <span>+</span> Add Project
+              <div
+                className="cd-featured-grid"
+                style={{
+                  opacity: projectTransition ? 0 : 1,
+                  transform: projectTransition
+                    ? `translateX(${slideDirection === "right" ? "-20px" : "20px"}) scale(0.99)`
+                    : "none",
+                  transition: "opacity 0.25s ease, transform 0.25s ease",
+                }}
+              >
+                {/* Image Preview Container - Object Contain for 100% full view without cropping */}
+                <a
+                  href={currentProject.liveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cd-featured-preview group"
+                  title={`Open ${currentProject.title} Live Demo`}
+                >
+                  <img
+                    key={currentProject.id}
+                    src={currentProject.image}
+                    alt={currentProject.title}
+                    loading="eager"
+                  />
+                </a>
+
+                {/* Content */}
+                <div className="cd-featured-content">
+                  <div>
+                    <div className="cd-featured-meta">
+                      <span>{currentProject.stats[0] || "Featured Project"}</span>
+                      <a
+                        href={currentProject.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg"
+                        title="View Live"
+                      >
+                        <svg><use href="#ur" /></svg>
+                      </a>
+                    </div>
+                    <h3 style={{ marginTop: "1rem" }}>{currentProject.title}</h3>
+                    <p style={{ marginTop: "0.75rem" }}>{currentProject.description}</p>
+                  </div>
+
+                  <div>
+                    <div className="tg">
+                      {(currentProject.tags || []).map((tag) => (
+                        <span key={tag}>{tag}</span>
+                      ))}
+                    </div>
+                    <div className="cd-actions">
+                      <a
+                        href={currentProject.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-live"
+                      >
+                        Live Demo ↗
+                      </a>
+                      <a
+                        href={currentProject.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-code"
+                      >
+                        Source Code
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dots Pagination */}
+            <div className="proj-dots">
+              {PROJECTS_DATA.map((_, idx) => (
+                <button
+                  key={idx}
+                  className={`proj-dot ${idx === projectIndex ? "active" : ""}`}
+                  onClick={() => goToProject(idx)}
+                  aria-label={`Jump to project 0${idx + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Skills & Services Section ── */}
+        <section className="sec" id="skills">
+          <div className="shell sv">
+            <div className="eb rv in">Services &amp; Capabilities</div>
+            <h2 className="h">
+              <span className="ln">
+                <span>What I do best</span>
+              </span>
+            </h2>
+
+            <ul>
+              {SERVICES.map((srv, idx) => (
+                <li key={srv.num} className="rv in" style={{ transitionDelay: `${idx * 70}ms` }}>
+                  <div className="sr2">
+                    <span className="n">{srv.num}</span>
+                    <h3>{srv.title}</h3>
+                    <p>{srv.desc}</p>
+                    <i>
+                      <svg><use href="#ur" /></svg>
+                    </i>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* ── Education, Certifications & Achievements ── */}
+        <section className="sec" id="education">
+          <div className="shell edu-sec">
+            <div className="eb bd rv in">Academic &amp; Professional Background</div>
+            <h2 className="h">
+              <span className="ln">
+                <span>Education &amp; Credentials</span>
+              </span>
+            </h2>
+
+            <div className="edu-grid">
+              {/* Card 1: Education & Certifications */}
+              <div className="edu-card rv in">
+                <div className="edu-card-header">
+                  <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>Education &amp; Certifications</h3>
+                  <span className="edu-tag">Credentials</span>
+                </div>
+                <div className="edu-list">
+                  <div className="edu-item">
+                    <h4>Bachelor of Technology — Information Technology</h4>
+                    <p>Indore Institute of Science and Technology (IIST), RGPV University • 2023 – 2027</p>
+                  </div>
+                  <div className="edu-item">
+                    <h4>SQL &amp; Relational Databases 101</h4>
+                    <p>IBM Skills Network — Relational database modeling, SQL queries &amp; schemas (June 2025)</p>
+                  </div>
+                  <div className="edu-item">
+                    <h4>Data Analytics Job Simulation</h4>
+                    <p>Deloitte via Forage — Practical data preparation, analytics &amp; client communication (Dec 2025)</p>
+                  </div>
+                  <div className="edu-item">
+                    <h4>Agentic AI Starter Certification</h4>
+                    <p>Hands-on understanding of agentic architectures, tool use &amp; modern AI systems (2025)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Achievements & Activities */}
+              <div className="edu-card rv in" style={{ transitionDelay: "100ms" }}>
+                <div className="edu-card-header">
+                  <h3 style={{ fontSize: "1.25rem", fontWeight: 600 }}>Achievements &amp; Activities</h3>
+                  <span className="edu-tag" style={{ background: "var(--acc)" }}>Honors</span>
+                </div>
+                <div className="edu-list">
+                  <div className="edu-item">
+                    <h4>Winner, Volleyball — IIST Annual Sports</h4>
+                    <p>Champion team representative in competitive inter-college volleyball tournament (2024–25)</p>
+                  </div>
+                  <div className="edu-item">
+                    <h4>National Pickleball Tournament 2025</h4>
+                    <p>Active competitive participant, Pickleball Federation of India</p>
+                  </div>
+                  <div className="edu-item">
+                    <h4>Virtual Lab Workshop — IIT Delhi</h4>
+                    <p>Conducted by IIT Delhi and organized by IIST Indore for practical computing lab simulations</p>
+                  </div>
+                  <div className="edu-item">
+                    <h4>National Science Day 2026</h4>
+                    <p>Active participant and project showcase at IIST Indore</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* ── Footer / Contact CTA ── */}
+      <footer id="contact">
+        <div className="shell">
+          <div className="fc">
+            <h2>
+              <span className="ln">
+                <span>Have a project or opportunity in mind?</span>
+              </span>
+              <span className="ln">
+                <span style={{ transitionDelay: "100ms" }}>Let's get to work.</span>
+              </span>
+            </h2>
+            <button className="pill light ar up" onClick={() => setModalOpen(true)}>
+              <span>
+                Start a project
+                <i>
+                  <svg><use href="#ur" /></svg>
+                </i>
+              </span>
             </button>
           </div>
 
-          <div className="flex flex-col gap-5">
-            {projectList.map((project, pi) => (
-              <div
-                key={project.id}
-                className="card-hover group relative border border-[#22262c] rounded-xl p-6 sm:p-8 bg-[#14171c] transition-all duration-500 hover:border-neutral-700"
-                style={{
-                  transitionDelay: projects.visible ? `${pi * 120}ms` : "0ms",
-                  opacity: projects.visible ? 1 : 0,
-                  transform: projects.visible ? "translateY(0)" : "translateY(24px)",
-                }}
-              >
-                {/* Delete Project */}
-                <button
-                  onClick={() => removeProject(project.id)}
-                  className="absolute top-4 right-4 w-7 h-7 rounded-md border border-neutral-800 bg-[#101317] text-neutral-500 hover:text-red-400 hover:border-red-900 transition-all flex items-center justify-center text-xs"
-                  title="Remove project"
-                >
-                  ✕
-                </button>
-
-                {/* Header: Title and Index */}
-                <div className="flex justify-between items-start gap-4 mb-3 pr-8">
-                  <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-white group-hover:text-accent transition-colors duration-200">
-                    {project.title}
-                  </h3>
-                  <span className="font-mono text-xs text-neutral-500 shrink-0">
-                    0{pi + 1}
-                  </span>
-                </div>
-
-                {/* Description */}
-                <p className="text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-3xl mb-5">
-                  {project.desc}
-                </p>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {project.tech.map((t) => (
-                    <span
-                      key={t}
-                      className="font-mono text-xs text-neutral-400 border border-[#22262c] px-2.5 py-1 rounded-md bg-[#0b0d10]"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Links */}
-                <div className="flex items-center gap-3">
-                  {project.link && project.link !== "#" && (
-                    <a
-                      href={project.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-semibold px-4 py-2 rounded-lg border border-[#22262c] text-white transition-all duration-200 hover:border-accent hover:text-accent flex items-center gap-1"
-                    >
-                      GitHub ↗
-                    </a>
-                  )}
-                  {project.live ? (
-                    <a
-                      href={project.live}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-semibold px-4 py-2 rounded-lg bg-accent/15 border border-accent/30 text-accent transition-all duration-200 hover:bg-accent hover:text-[#06231a]"
-                    >
-                      Live demo ↗
-                    </a>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        const url = prompt("Enter live demo URL:");
-                        if (url) updateProjectLive(project.id, url);
-                      }}
-                      className="text-xs font-semibold px-4 py-2 rounded-lg border border-dashed border-[#22262c] text-neutral-500 hover:border-neutral-500 hover:text-neutral-300 transition-all"
-                    >
-                      + Add live link
-                    </button>
-                  )}
-                </div>
+          <div className="cl">
+            <div>
+              <div className="lg">
+                <svg><use href="#logo" /></svg>
+                Krish Ukande
               </div>
-            ))}
+              <p>
+                Aspiring Full-Stack Developer specializing in MERN stack &amp; ASP.NET Core. Dedicated to shipping clean, reliable software with quiet precision.
+              </p>
+            </div>
+
+            <div>
+              <h4>Navigation</h4>
+              <ul>
+                <li><button className="al" onClick={() => scrollToSection("home")}>Home</button></li>
+                <li><button className="al" onClick={() => scrollToSection("about")}>About</button></li>
+                <li><button className="al" onClick={() => scrollToSection("projects")}>Projects</button></li>
+                <li><button className="al" onClick={() => scrollToSection("skills")}>Skills</button></li>
+                <li><button className="al" onClick={() => scrollToSection("education")}>Education</button></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4>Specialties</h4>
+              <ul>
+                <li><span className="al">MERN Stack (React &amp; Node)</span></li>
+                <li><span className="al">ASP.NET Core &amp; C#</span></li>
+                <li><span className="al">FastAPI &amp; Python</span></li>
+                <li><span className="al">MongoDB &amp; PostgreSQL</span></li>
+                <li><span className="al">SignalR &amp; WebSockets</span></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4>Connect</h4>
+              <ul>
+                <li><a className="al" href="https://github.com/krish6587" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+                <li><a className="al" href="https://www.linkedin.com/in/krish-ukande/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+                <li><a className="al" href={`mailto:${CONTACT_EMAIL}`}>Email</a></li>
+                <li><a className="al" href="/resume.pdf" target="_blank" rel="noopener noreferrer">Resume (PDF)</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="lb">
+            <span>© 2026 Krish Kumar Ukande. All rights reserved.</span>
+            <div>
+              <button className="al" onClick={() => setPrivacyOpen(true)}>Privacy Policy</button>
+              <button className="al" onClick={() => setModalOpen(true)}>Direct Contact</button>
+            </div>
           </div>
         </div>
 
-        {/* ── Add Project Modal ── */}
-        {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowAddModal(false)}>
-            <div className="bg-[#14171c] border border-[#22262c] rounded-xl p-8 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-xl font-bold tracking-tight text-white mb-6">Add New Project</h3>
-
-              <div className="flex flex-col gap-4">
-                <input
-                  type="text"
-                  placeholder="Project Title"
-                  value={newProject.title}
-                  onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
-                  className="w-full bg-[#0b0d10] border border-[#22262c] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-accent transition-colors"
-                />
-                <textarea
-                  placeholder="Description"
-                  value={newProject.desc}
-                  onChange={(e) => setNewProject({ ...newProject, desc: e.target.value })}
-                  rows={3}
-                  className="w-full bg-[#0b0d10] border border-[#22262c] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-accent transition-colors resize-none"
-                />
-                <input
-                  type="text"
-                  placeholder="Tech (comma separated, e.g. React, Node.js)"
-                  value={newProject.tech}
-                  onChange={(e) => setNewProject({ ...newProject, tech: e.target.value })}
-                  className="w-full bg-[#0b0d10] border border-[#22262c] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-accent transition-colors"
-                />
-                <input
-                  type="text"
-                  placeholder="GitHub URL (optional)"
-                  value={newProject.link}
-                  onChange={(e) => setNewProject({ ...newProject, link: e.target.value })}
-                  className="w-full bg-[#0b0d10] border border-[#22262c] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-accent transition-colors"
-                />
-                <input
-                  type="text"
-                  placeholder="Live Demo URL (optional)"
-                  value={newProject.live}
-                  onChange={(e) => setNewProject({ ...newProject, live: e.target.value })}
-                  className="w-full bg-[#0b0d10] border border-[#22262c] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-accent transition-colors"
-                />
-              </div>
-
-              <div className="flex gap-4 mt-6">
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 rounded-lg border border-[#22262c] py-2.5 text-sm text-neutral-400 transition-all hover:bg-neutral-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={addProject}
-                  className="flex-1 rounded-lg bg-accent text-[#06231a] py-2.5 text-sm font-semibold transition-all hover:bg-[#93edcf]"
-                >
-                  Add Project
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Section Divider */}
-      <div className="section-divider" />
-
-      {/* ═══════════════  04 — CONTACT  ═══════════════ */}
-      <footer
-        id="contact"
-        ref={contact.ref}
-        className="relative bg-[#0b0d10] px-6 sm:px-12 lg:px-16 pt-24 sm:pt-28 pb-14"
-      >
-        <div className={`max-w-6xl mx-auto w-full transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${contact.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16"}`}>
-          <span className="font-mono text-xs text-accent tracking-wider block mb-3">
-            <span className="text-neutral-500">// </span>04 &mdash; Contact
-          </span>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start mb-20">
-            {/* Left: Info & Quick Action Buttons */}
-            <div className="lg:col-span-6 flex flex-col">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white mb-4 font-sans leading-tight">
-                Let's build something worth shipping.
-              </h2>
-              <p className="text-neutral-400 text-base sm:text-lg leading-relaxed mb-6">
-                Open to internships, full-stack roles, freelance work, and collaborations. Whether you have a project in mind or just want to say hi, my inbox is always open.
-              </p>
-
-              {/* Status pill */}
-              <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono w-fit mb-8">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                Available for internships &amp; new opportunities (2026)
-              </div>
-
-              {/* Email CTAs */}
-              <div className="flex flex-col sm:flex-row gap-3.5 mb-6">
-                <a
-                  href="mailto:krishukande9@gmail.com"
-                  className="btn-glow inline-flex items-center justify-center gap-2 rounded-xl bg-accent text-[#06231a] px-6 py-3.5 text-sm font-bold transition-all duration-200 hover:bg-[#93edcf] hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(127,231,196,0.2)]"
-                >
-                  <Mail size={16} />
-                  Email me
-                </a>
-
-                {/* Quick copy email button */}
-                <button
-                  onClick={handleCopyEmail}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#22262c] bg-[#121519] text-white px-5 py-3.5 text-sm font-semibold transition-all duration-200 hover:border-neutral-600 hover:bg-[#181c22] active:scale-95"
-                  title="Click to copy email address"
-                >
-                  {copiedEmail ? (
-                    <>
-                      <Check size={16} className="text-accent" />
-                      <span className="text-accent">Copied to clipboard!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={16} className="text-neutral-400" />
-                      <span className="font-mono text-xs sm:text-sm text-neutral-300">krishukande9@gmail.com</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Social links row */}
-              <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-[#22262c]/60">
-                <span className="text-xs text-neutral-500 font-mono mr-2">Profiles:</span>
-                {SOCIAL_LINKS.map((item) => (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#22262c] text-neutral-300 px-3.5 py-2 text-xs font-semibold transition-all duration-200 hover:text-white hover:border-neutral-500 hover:bg-[#14171c]"
-                  >
-                    {item.label}
-                    <ArrowUpRight size={13} className="text-neutral-500" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: Quick Direct Contact Form */}
-            <div className="lg:col-span-6 bg-[#111418] border border-[#22262c] rounded-2xl p-6 sm:p-8 relative overflow-hidden">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h3 className="text-lg font-bold text-white font-sans">Send a direct message</h3>
-                  <p className="text-xs text-neutral-400 mt-0.5">I'll get back to you as soon as possible.</p>
-                </div>
-                <div className="h-8 w-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
-                  <Send size={14} />
-                </div>
-              </div>
-
-              <form onSubmit={handleContactSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-mono text-neutral-400 mb-1.5">Your Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Alex Sharma"
-                    value={contactForm.name}
-                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                    className="w-full bg-[#0b0d10] border border-[#22262c] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-accent transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono text-neutral-400 mb-1.5">Your Email (optional)</label>
-                  <input
-                    type="email"
-                    placeholder="alex@example.com"
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                    className="w-full bg-[#0b0d10] border border-[#22262c] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-accent transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono text-neutral-400 mb-1.5">Message *</label>
-                  <textarea
-                    required
-                    rows={4}
-                    placeholder="Hi Krish, let's connect regarding a project..."
-                    value={contactForm.message}
-                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                    className="w-full bg-[#0b0d10] border border-[#22262c] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-accent transition-colors resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="btn-glow w-full flex items-center justify-center gap-2 rounded-xl bg-accent text-[#06231a] py-3 text-sm font-bold transition-all duration-200 hover:bg-[#93edcf] hover:scale-[1.01] active:scale-95 disabled:opacity-60 disabled:pointer-events-none shadow-[0_0_16px_rgba(127,231,196,0.15)]"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>Sending directly to Krish...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send size={15} />
-                      <span>Send message</span>
-                    </>
-                  )}
-                </button>
-
-                {submitStatus === "success" && (
-                  <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs sm:text-sm flex items-start gap-2.5 anim-fade-in">
-                    <Check size={16} className="flex-shrink-0 mt-0.5 text-accent" />
-                    <div>
-                      <p className="font-semibold text-white">Message sent directly to Krish's Gmail!</p>
-                      <p className="text-neutral-400 text-xs mt-0.5">Thank you for reaching out. I'll get back to you shortly.</p>
-                    </div>
-                  </div>
-                )}
-
-                {submitStatus === "error" && (
-                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2 anim-fade-in">
-                    <span>Opened your mail client as fallback! Or copy email directly from the button on the left.</span>
-                  </div>
-                )}
-              </form>
-            </div>
-          </div>
-
-          {/* Bottom attribution */}
-          <div className="border-t border-[#22262c] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-500 font-mono">
-            <span>&copy; 2026 Krish Kumar Ukande. All rights reserved.</span>
-            <span>Built with React, TypeScript &amp; a lot of coffee.</span>
-          </div>
+        <div className="fw" aria-hidden="true">
+          KRISH
         </div>
       </footer>
 
-      {/* ═══════════════  MOBILE DRAWER  ═══════════════ */}
-      {/* Backdrop */}
-      <div
-        className={`sm:hidden fixed inset-0 z-40 transition-opacity duration-500 bg-black/40 backdrop-blur-sm ${
-          drawerOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        }`}
-        onClick={closeDrawer}
-        aria-hidden={!drawerOpen}
-      />
-
-      {/* Panel */}
-      <aside
-        className={`sm:hidden fixed top-0 right-0 bottom-0 z-40 flex flex-col justify-between w-[80%] max-w-sm bg-[#141414] px-8 py-10 transition-transform duration-[600ms] ease-[cubic-bezier(0.76,0,0.24,1)] ${
-          drawerOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-        aria-label="Mobile navigation"
-      >
-        <button
-          type="button"
-          aria-label="Close navigation"
-          onClick={closeDrawer}
-          className={`absolute right-6 top-6 text-cream focus:outline-none transition-all duration-300 ${
-            drawerOpen
-              ? "rotate-0 opacity-100 delay-[300ms]"
-              : "rotate-90 opacity-0 pointer-events-none"
-          }`}
-        >
-          <X size={26} strokeWidth={1.5} />
-        </button>
-
-        {/* Site Index */}
-        <div className="mt-12 flex flex-col">
-          <span
-            className={`font-hn uppercase tracking-[0.2em] text-cream/50 text-xs mb-6 transform transition-all duration-500 ease-[cubic-bezier(0.76,0,0.24,1)] ${
-              drawerOpen
-                ? "translate-y-0 opacity-100 delay-[250ms]"
-                : "translate-y-4 opacity-0"
-            }`}
-          >
-            Site Index
-          </span>
-          <nav className="flex flex-col gap-4">
-            {NAV_LINKS.map((item, i) => {
-              const delay = 300 + i * 80;
-              return (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  onClick={closeDrawer}
-                  className={`font-hn text-4xl font-normal text-cream transition-all duration-500 ease-[cubic-bezier(0.76,0,0.24,1)] hover:opacity-60 ${
-                    drawerOpen
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-6 opacity-0"
-                  }`}
-                  style={{
-                    transitionDelay: drawerOpen ? `${delay}ms` : "0ms",
-                  }}
-                >
-                  {item.label}
-                </a>
-              );
-            })}
-          </nav>
+      {/* ── Fullscreen Navigation Modal ── */}
+      <div id="nav" className={navOpen ? "open" : ""} role="dialog" aria-modal="true" aria-label="Menu">
+        <div className="top">
+          <div className="lg" style={{ fontSize: "1.125rem" }}>
+            <svg className="l"><use href="#logo" /></svg>
+            Krish Ukande
+          </div>
+          <button className="cls" onClick={() => setNavOpen(false)}>
+            <svg style={{ fontSize: "0.875rem" }}><use href="#x" /></svg>
+            Close
+          </button>
         </div>
 
-        {/* Find Me */}
-        <div className="flex flex-col pt-8">
-          <span
-            className={`font-hn uppercase tracking-[0.2em] text-cream/50 text-xs mb-4 transform transition-all duration-500 ease-[cubic-bezier(0.76,0,0.24,1)] ${
-              drawerOpen
-                ? "translate-y-0 opacity-100 delay-[500ms]"
-                : "translate-y-4 opacity-0"
-            }`}
+        <ul>
+          {[
+            { label: "Home", id: "home" },
+            { label: "About", id: "about" },
+            { label: "Selected Work", id: "projects" },
+            { label: "Skills & Services", id: "skills" },
+            { label: "Education & Awards", id: "education" },
+            { label: "Contact", id: "contact" }
+          ].map((item, idx) => (
+            <li key={item.label}>
+              <button
+                style={{ ["--i" as any]: idx }}
+                onClick={() => {
+                  setNavOpen(false);
+                  if (item.id === "contact") {
+                    setModalOpen(true);
+                  } else {
+                    scrollToSection(item.id);
+                  }
+                }}
+              >
+                <small>0{idx + 1}</small>
+                <span>{item.label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        <div className="bot">
+          <span>Local time — {timeStr}</span>
+          <button
+            onClick={() => {
+              setNavOpen(false);
+              setModalOpen(true);
+            }}
           >
-            Find Me
-          </span>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {SOCIAL_LINKS.map((item, i) => {
-              const delay = 550 + i * 60;
-              return (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={closeDrawer}
-                  className={`font-hn text-sm font-normal text-cream transition-all duration-500 ease-[cubic-bezier(0.76,0,0.24,1)] hover:opacity-60 ${
-                    drawerOpen
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-4 opacity-0"
-                  }`}
-                  style={{
-                    transitionDelay: drawerOpen ? `${delay}ms` : "0ms",
-                  }}
-                >
-                  {item.label}
-                </a>
-              );
-            })}
+            Start a project →
+          </button>
+        </div>
+      </div>
+
+      {/* ── Contact Project Modal ── */}
+      <div id="md" className={modalOpen ? "open" : ""} role="dialog" aria-modal="true">
+        <div className={`pn2 ${formSuccess ? "done" : ""}`}>
+          <button className="x" aria-label="Close" onClick={() => setModalOpen(false)}>
+            <svg><use href="#x" /></svg>
+          </button>
+
+          <div className="hd">
+            <div className="eb">Start a conversation</div>
+            <h2>Tell me what you're building.</h2>
+          </div>
+
+          <form onSubmit={handleFormSubmit}>
+            {/* Honeypot field */}
+            <div style={{ display: "none" }} aria-hidden="true">
+              <input
+                type="text"
+                name="_honey"
+                value={contactForm._honey}
+                onChange={(e) => setContactForm({ ...contactForm, _honey: e.target.value })}
+              />
+            </div>
+
+            <label>
+              Your Name *
+              <input
+                required
+                placeholder="e.g. Alex Sharma"
+                value={contactForm.name}
+                onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+              />
+            </label>
+
+            <label>
+              Your Email *
+              <input
+                type="email"
+                required
+                placeholder="you@company.com"
+                value={contactForm.email}
+                onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+              />
+            </label>
+
+            <label>
+              Project or Opportunity *
+              <textarea
+                rows={4}
+                required
+                placeholder="A few words about your project, internship opportunity, or idea."
+                value={contactForm.message}
+                onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+              />
+            </label>
+
+            <div className="fb">
+              <p>I reply within one business day.</p>
+              <button className="pill dark ar up" type="submit" disabled={formSubmitting}>
+                <span>
+                  {formSubmitting ? "Sending…" : "Send request"}
+                  <i>
+                    <svg><use href="#ur" /></svg>
+                  </i>
+                </span>
+              </button>
+            </div>
+          </form>
+
+          <div className="ok">
+            <div className="bd">
+              <svg><use href="#logo" /></svg>
+            </div>
+            <h2>Request received</h2>
+            <p>Thanks for reaching out! I'll get back to you within one business day.</p>
+            <button
+              className="pill dark"
+              onClick={() => {
+                setModalOpen(false);
+                setFormSuccess(false);
+                setContactForm({ name: "", email: "", message: "", _honey: "" });
+              }}
+            >
+              <span>Close</span>
+            </button>
           </div>
         </div>
-      </aside>
-    </div>
+      </div>
+
+      {/* ── Privacy Policy Modal ── */}
+      <div id="md" className={privacyOpen ? "open" : ""} role="dialog" aria-modal="true">
+        <div className="pn2">
+          <button className="x" aria-label="Close" onClick={() => setPrivacyOpen(false)}>
+            <svg><use href="#x" /></svg>
+          </button>
+          <div className="hd">
+            <div className="eb">Privacy Policy</div>
+            <h2>Your data is respected.</h2>
+          </div>
+          <div style={{ fontSize: "0.875rem", color: "rgba(17,17,17,0.7)", lineHeight: "1.6" }}>
+            <p style={{ marginBottom: "1rem" }}>
+              Any information submitted via the contact form (including your name and email address) is used solely to respond to your inquiry and communicate regarding potential opportunities or collaborations.
+            </p>
+            <p style={{ marginBottom: "1.5rem" }}>
+              No personal data is sold, rented, or shared with third parties. All inquiries are securely delivered via FormSubmit to krishukande9@gmail.com.
+            </p>
+            <button className="pill dark" onClick={() => setPrivacyOpen(false)}>
+              <span>Got it</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
